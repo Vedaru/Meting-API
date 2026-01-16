@@ -1,4 +1,4 @@
-name = "meting-api"
+name = "metingapi"
 main = "./src/worker.js"
 compatibility_date = "2024-09-23"
 
@@ -6,7 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 HTTP_PREFIX = ""
-METING_URL = ""
+METING_URL = "https://api.vedaru.cn/"
 METING_TOKEN = "token"
 METING_COOKIE_ALLOW_HOSTS = ""
 
