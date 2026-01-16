@@ -1,5 +1,5 @@
 name = "meting-api"
-main = "./test-worker.js"
+main = "./src/worker.js"
 compatibility_date = "2024-01-01"
 
 [vars]
