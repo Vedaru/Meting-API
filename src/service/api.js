@@ -42,9 +42,9 @@ async function hmacSha1(key, message) {
 export default async (c) => {
   // 1. 初始化参数
   const query = c.req.query()
-  const server = query.server || 'netease'
-  const type = query.type || 'search'
-  const id = query.id || 'hello'
+  const server = query.server || 'tencent'
+  const type = query.type || 'playlist'
+  const id = query.id || '9647979018'
   const token = query.token || query.auth || 'token'
 
   // 2. 校验参数

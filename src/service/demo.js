@@ -4,9 +4,9 @@ import { html } from 'hono/html'
 export default async (c) => {
   // 1. 初始化参数
   const query = c.req.query()
-  const server = query.server || 'netease'
-  const type = query.type || 'search'
-  const id = query.id || 'hello'
+  const server = query.server || 'tencent'
+  const type = query.type || 'playlist'
+  const id = query.id || '9647979018'
 
   // 2. 生成 HTML
   return c.html(html`
