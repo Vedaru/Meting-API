@@ -11,6 +11,18 @@ const app = new Hono()
   .use(cors())
   .use(errors)
 
+app.get('/', (c) => {
+  return c.json({
+    name: 'Meting API',
+    version: '1.0.0',
+    description: 'Music API service for Cloudflare Workers',
+    endpoints: {
+      api: `${config.http.prefix}/api`,
+      demo: `${config.http.prefix}/demo`
+    }
+  })
+})
+
 app.get(`${config.http.prefix}/api`, apiService)
 app.get(`${config.http.prefix}/demo`, demoService)
 
