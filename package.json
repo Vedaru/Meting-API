@@ -10,6 +10,7 @@
   "scripts": {
     "start": "wrangler dev",
     "dev": "wrangler dev",
+    "build": "echo 'Build completed - Cloudflare Workers handles deployment'",
     "deploy": "wrangler deploy",
     "lint": "eslint ."
   },
