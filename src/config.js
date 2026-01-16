@@ -21,7 +21,8 @@ export default {
     certPath: ''
   },
   meting: {
-    url: globalThis.METING_URL || '',
+    // 默认指向站点的 Meting 专用子域，避免生成相对 /api 路径导致客户端使用站点根域调用 API
+    url: globalThis.METING_URL || 'https://api.vedaru.cn',
     token: globalThis.METING_TOKEN || 'token',
     cookie: {
       allowHosts: globalThis.METING_COOKIE_ALLOW_HOSTS
