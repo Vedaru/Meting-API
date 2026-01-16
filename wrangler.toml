@@ -1,0 +1,11 @@
+name = "meting-api"
+main = "./test-worker.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+HTTP_PREFIX = ""
+METING_URL = ""
+METING_TOKEN = "token"
+METING_COOKIE_ALLOW_HOSTS = ""
+
+compatibility_flags = ["nodejs_compat"]

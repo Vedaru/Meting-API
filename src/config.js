@@ -1,7 +1,4 @@
-import dotenv from 'dotenv'
-
-dotenv.config()
-
+// Cloudflare Workers 环境变量配置
 const toBoolean = value => {
   if (value === undefined) return false
   return ['1', 'true', 'yes', 'on'].includes(String(value).toLowerCase())
@@ -14,21 +11,21 @@ const toNumber = (value, fallback) => {
 
 export default {
   http: {
-    prefix: process.env.HTTP_PREFIX || '',
-    port: toNumber(process.env.HTTP_PORT, 80)
+    prefix: globalThis.HTTP_PREFIX || '',
+    port: 80 // Workers 不需要端口
   },
   https: {
-    enabled: toBoolean(process.env.HTTPS_ENABLED),
-    port: toNumber(process.env.HTTPS_PORT, 443),
-    keyPath: process.env.SSL_KEY_PATH || '',
-    certPath: process.env.SSL_CERT_PATH || ''
+    enabled: false, // Workers 自动处理 HTTPS
+    port: 443,
+    keyPath: '',
+    certPath: ''
   },
   meting: {
-    url: process.env.METING_URL || '',
-    token: process.env.METING_TOKEN || 'token',
+    url: globalThis.METING_URL || '',
+    token: globalThis.METING_TOKEN || 'token',
     cookie: {
-      allowHosts: process.env.METING_COOKIE_ALLOW_HOSTS
-        ? (process.env.METING_COOKIE_ALLOW_HOSTS).split(',').map(h => h.trim().toLowerCase())
+      allowHosts: globalThis.METING_COOKIE_ALLOW_HOSTS
+        ? globalThis.METING_COOKIE_ALLOW_HOSTS.split(',').map(h => h.trim().toLowerCase())
         : []
     }
   }

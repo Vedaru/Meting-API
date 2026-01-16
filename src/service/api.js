@@ -1,15 +1,13 @@
 import Meting from '@meting/core'
-import hashjs from 'hash.js'
 import { HTTPException } from 'hono/http-exception'
 import config from '../config.js'
 import { format as lyricFormat } from '../utils/lyric.js'
 import { readCookieFile, isAllowedHost } from '../utils/cookie.js'
-import { LRUCache } from 'lru-cache'
 
-const cache = new LRUCache({
-  max: 1000,
-  ttl: 1000 * 30
-})
+// 简单的内存缓存（替代 LRU Cache）
+const cache = new Map()
+const CACHE_MAX_SIZE = 1000
+
 const METING_METHODS = {
   search: 'search',
   song: 'song',
@@ -19,6 +17,26 @@ const METING_METHODS = {
   lrc: 'lyric',
   url: 'url',
   pic: 'pic'
+}
+
+// HMAC-SHA1 实现（使用 Web Crypto API）
+async function hmacSha1(key, message) {
+  const encoder = new TextEncoder()
+  const keyData = encoder.encode(key)
+  const messageData = encoder.encode(message)
+
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-1' },
+    false,
+    ['sign']
+  )
+
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageData)
+  return Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
 }
 
 export default async (c) => {
@@ -39,15 +57,20 @@ export default async (c) => {
 
   // 3. 鉴权
   if (['lrc', 'url', 'pic'].includes(type)) {
-    if (auth(server, type, id) !== token) {
+    if ((await auth(server, type, id)) !== token) {
       throw new HTTPException(401, { message: '鉴权失败,非法调用' })
     }
   }
 
   // 4. 调用 API
   const cacheKey = `${server}/${type}/${id}`
-  let data = cache.get(cacheKey)
-  if (data === undefined) {
+  let cachedItem = cache.get(cacheKey)
+  let data
+
+  if (cachedItem && Date.now() - cachedItem.timestamp < cachedItem.ttl) {
+    data = cachedItem.data
+    c.header('x-cache', 'hit')
+  } else {
     c.header('x-cache', 'miss')
     const meting = new Meting(server)
     meting.format(true)
@@ -73,9 +96,20 @@ export default async (c) => {
     } catch (error) {
       throw new HTTPException(500, { message: '上游 API 返回格式异常' })
     }
-    cache.set(cacheKey, data, {
-      ttl: type === 'url' ? 1000 * 60 * 10 : 1000 * 60 * 60
+
+    // 缓存数据
+    const ttl = type === 'url' ? 1000 * 60 * 10 : 1000 * 60 * 60
+    cache.set(cacheKey, {
+      data,
+      timestamp: Date.now(),
+      ttl
     })
+
+    // 限制缓存大小
+    if (cache.size > CACHE_MAX_SIZE) {
+      const firstKey = cache.keys().next().value
+      cache.delete(firstKey)
+    }
   }
 
   // 5. 组装结果
@@ -122,17 +156,20 @@ export default async (c) => {
     return c.text(lyricFormat(data.lyric, data.tlyric || ''))
   }
 
-  return c.json(data.map(x => {
+  return c.json(await Promise.all(data.map(async x => {
+    const urlAuth = await auth(server, 'url', x.url_id)
+    const picAuth = await auth(server, 'pic', x.pic_id)
+    const lrcAuth = await auth(server, 'lrc', x.lyric_id)
     return {
       title: x.name,
       author: x.artist.join(' / '),
-      url: `${config.meting.url}/api?server=${server}&type=url&id=${x.url_id}&auth=${auth(server, 'url', x.url_id)}`,
-      pic: `${config.meting.url}/api?server=${server}&type=pic&id=${x.pic_id}&auth=${auth(server, 'pic', x.pic_id)}`,
-      lrc: `${config.meting.url}/api?server=${server}&type=lrc&id=${x.lyric_id}&auth=${auth(server, 'lrc', x.lyric_id)}`
+      url: `${config.meting.url}/api?server=${server}&type=url&id=${x.url_id}&auth=${urlAuth}`,
+      pic: `${config.meting.url}/api?server=${server}&type=pic&id=${x.pic_id}&auth=${picAuth}`,
+      lrc: `${config.meting.url}/api?server=${server}&type=lrc&id=${x.lyric_id}&auth=${lrcAuth}`
     }
-  }))
+  })))
 }
 
-const auth = (server, type, id) => {
-  return hashjs.hmac(hashjs.sha1, config.meting.token).update(`${server}${type}${id}`).digest('hex')
+const auth = async (server, type, id) => {
+  return await hmacSha1(config.meting.token, `${server}${type}${id}`)
 }

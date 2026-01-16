@@ -47,6 +47,40 @@ yarn dev
 yarn start
 ```
 
+### Cloudflare Workers 部署
+
+Cloudflare Workers 提供全球 CDN 加速，适合博客等轻量级 API 服务。
+
+```bash
+# 安装依赖
+npm install
+
+# 登录 Cloudflare
+npx wrangler auth login
+
+# 配置环境变量
+npx wrangler secret put METING_TOKEN
+npx wrangler secret put METING_URL
+# 可选：配置 cookie
+npx wrangler secret put METING_COOKIE_NETEASE
+
+# 本地开发
+npm run dev
+
+# 部署到 Cloudflare Workers
+npm run deploy
+```
+
+配置 `wrangler.toml` 中的环境变量：
+
+```toml
+[vars]
+HTTP_PREFIX = ""
+METING_URL = "https://your-worker.your-subdomain.workers.dev"
+METING_TOKEN = "your-secret-token"
+METING_COOKIE_ALLOW_HOSTS = "your-blog-domain.com"
+```
+
 ### Docker 部署
 
 ```bash
