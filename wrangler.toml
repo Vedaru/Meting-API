@@ -8,6 +8,6 @@ compatibility_flags = ["nodejs_compat"]
 HTTP_PREFIX = ""
 METING_URL = "https://api.vedaru.cn/"
 METING_TOKEN = "token"
-METING_COOKIE_ALLOW_HOSTS = ""
+METING_COOKIE_ALLOW_HOSTS = "https://api.vedaru.cn/"
 
 compatibility_flags = ["nodejs_compat"]
