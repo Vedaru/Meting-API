@@ -44,7 +44,7 @@ export default async (c) => {
   const query = c.req.query()
   const server = query.server || 'tencent'
   const type = query.type || 'playlist'
-  const id = query.id || '9647979018'
+  const id = query.id || '9648000288'
   const token = query.token || query.auth || 'token'
 
   // 2. 校验参数
