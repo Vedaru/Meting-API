@@ -119,7 +119,7 @@ export default async (c) => {
     if (!url) {
       return c.body(null, 404)
     }
-    // 链接转换
+    // 链接转换（保留原有替换规则）
     if (server === 'netease') {
       url = url
         .replace('://m7c.', '://m7.')
@@ -140,7 +140,32 @@ export default async (c) => {
       url = url
         .replace('http://zhangmenshiting.qianqian.com', 'https://gss3.baidu.com/y0s1hSulBw92lNKgpU_Z2jR7b2w6buu')
     }
-    return c.redirect(url)
+
+    // 通过服务器端代理转发音频请求以解决浏览器 CORS 与 Range（断点）问题
+    try {
+      const rangeHeader = c.req.header('range')
+      const fetchHeaders = {}
+      if (rangeHeader) fetchHeaders.Range = rangeHeader
+
+      const upstream = await fetch(url, { headers: fetchHeaders })
+
+      // 将必要的响应头转发给客户端，同时注入 CORS 头
+      const respHeaders = new Headers()
+      ;["content-type", "content-length", "accept-ranges", "content-range", "cache-control", "etag"].forEach(h => {
+        const v = upstream.headers.get(h)
+        if (v) respHeaders.set(h, v)
+      })
+      respHeaders.set('access-control-allow-origin', '*')
+      respHeaders.set('access-control-expose-headers', 'Content-Length,Accept-Ranges,Content-Range')
+
+      return new Response(upstream.body, {
+        status: upstream.status,
+        headers: respHeaders
+      })
+    } catch (err) {
+      // 上游请求失败，返回 502
+      throw new HTTPException(502, { message: '上游音频请求失败' })
+    }
   }
 
   if (type === 'pic') {
